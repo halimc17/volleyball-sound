@@ -2,73 +2,101 @@
   --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  --bg: #F4F6F9;
+  /* Mikasa Court Pro: Arena Light */
+  --bg: #EEF3FA;
   --surface: #FFFFFF;
-  --surface-subtle: #E9EEF5;
-  --surface-hover: #F0F4F9;
+  --surface-subtle: #E3ECF8;
+  --surface-hover: #EBF2FC;
 
-  --ink: #0B1A2E;
-  --ink-muted: #46566E;
+  --ink: #0A1931;
+  --ink-muted: #3B4E6B;
 
-  --brand-navy: #0A2540;
-  --brand-navy-hover: #13365B;
+  --brand-navy: #0046AD;
+  --brand-navy-hover: #00368A;
   --brand-navy-ink: #FFFFFF;
-  --brand-mark-bg: #0A2540;
+  --brand-mark-bg: #003482;
 
-  --accent-crimson: #C1121F;
-  --accent-crimson-hover: #A30F1A;
-  --accent-crimson-ink: #B5121B;
-  --accent-crimson-tint: #FDECEC;
-  --accent-crimson-tint-ink: #9E1019;
+  --header-bg: #0046AD;
+  --header-ink: #FFFFFF;
+  --header-sub: #DCE9FF;
+  --header-btn-hover: rgba(255, 255, 255, 0.16);
+
+  --sport-gold: #FACC15;
+  --sport-gold-tint: #FEF3C7;
+  --sport-gold-tint-ink: #784700;
+  --sport-gold-star: #B45309;
+
+  --bgm-tint: #E6F0FF;
+  --bgm-tint-ink: #003B94;
+
+  --accent-crimson: #C81E2B;
+  --accent-crimson-hover: #A61722;
+  --accent-crimson-ink: #B51824;
+  --accent-crimson-tint: #FEECEE;
+  --accent-crimson-tint-ink: #9E121D;
 
   --emerald: #0A723E;
-  --emerald-tint: #E6F6EE;
+  --emerald-tint: #E4F7ED;
 
-  --border: #D5DEE9;
-  --border-strong: #8596AD;
-  --focus-ring: #0A2540;
+  --border: #CFDCEB;
+  --border-strong: #7D92B0;
+  --focus-ring: #0046AD;
 
-  --shadow-deck: 0 -4px 20px rgba(10, 37, 64, 0.08);
-  --shadow-drawer: 0 -8px 28px rgba(10, 37, 64, 0.14);
+  --shadow-deck: 0 -4px 20px rgba(0, 52, 130, 0.1);
+  --shadow-drawer: 0 -8px 28px rgba(0, 52, 130, 0.16);
 
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
 
-  --header-h: 56px;
+  --header-h: 58px;
   --deck-h: 72px;
   --bnav-h: 62px;
 }
 
 [data-theme='dark'] {
-  --bg: #0B111B;
-  --surface: #131C2B;
-  --surface-subtle: #1C283B;
-  --surface-hover: #213047;
+  /* Mikasa Court Pro: Booth Dark */
+  --bg: #08101D;
+  --surface: #101C2F;
+  --surface-subtle: #182842;
+  --surface-hover: #1E3150;
 
-  --ink: #F1F5F9;
-  --ink-muted: #9FB0C7;
+  --ink: #F2F6FC;
+  --ink-muted: #9DB3D1;
 
-  --brand-navy: #E2ECFA;
-  --brand-navy-hover: #FFFFFF;
-  --brand-navy-ink: #0B111B;
-  --brand-mark-bg: #1B3355;
+  --brand-navy: #FACC15;
+  --brand-navy-hover: #FDE047;
+  --brand-navy-ink: #08101D;
+  --brand-mark-bg: #0046AD;
+
+  --header-bg: #0D192C;
+  --header-ink: #F2F6FC;
+  --header-sub: #9DB3D1;
+  --header-btn-hover: rgba(250, 204, 21, 0.14);
+
+  --sport-gold: #FACC15;
+  --sport-gold-tint: #332A0B;
+  --sport-gold-tint-ink: #FDE047;
+  --sport-gold-star: #FACC15;
+
+  --bgm-tint: #132B4F;
+  --bgm-tint-ink: #93C5FD;
 
   --accent-crimson: #C81E2B;
   --accent-crimson-hover: #DC2626;
-  --accent-crimson-ink: #FF7A85;
-  --accent-crimson-tint: #35161D;
-  --accent-crimson-tint-ink: #FF949E;
+  --accent-crimson-ink: #FF8A93;
+  --accent-crimson-tint: #36151B;
+  --accent-crimson-tint-ink: #FF99A2;
 
   --emerald: #22C55E;
   --emerald-tint: #103123;
 
-  --border: #243247;
-  --border-strong: #5A6D88;
-  --focus-ring: #E2ECFA;
+  --border: #203350;
+  --border-strong: #587194;
+  --focus-ring: #FACC15;
 
-  --shadow-deck: 0 -4px 24px rgba(0, 0, 0, 0.45);
-  --shadow-drawer: 0 -10px 32px rgba(0, 0, 0, 0.6);
+  --shadow-deck: 0 -4px 24px rgba(0, 0, 0, 0.5);
+  --shadow-drawer: 0 -10px 32px rgba(0, 0, 0, 0.65);
 }
 
 *,
@@ -187,8 +215,9 @@ select {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
+  background: var(--header-bg);
+  color: var(--header-ink);
+  border-bottom: 3px solid var(--sport-gold);
 }
 
 .top-bar__brand {
@@ -206,16 +235,16 @@ select {
 
 .brand-name {
   margin: 0;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: var(--ink);
+  color: var(--header-ink);
 }
 
 .brand-sub {
   font-size: 12px;
   font-weight: 500;
-  color: var(--ink-muted);
+  color: var(--header-sub);
 }
 
 .top-bar__actions {
@@ -224,13 +253,27 @@ select {
   gap: 8px;
 }
 
+.top-bar .theme-btn {
+  color: var(--header-ink);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.top-bar .theme-btn:hover {
+  background: var(--header-btn-hover);
+  color: var(--header-ink);
+}
+
+.top-bar .theme-btn:focus-visible {
+  outline-color: var(--sport-gold);
+}
+
 .shortcut-toast {
   padding: 6px 10px;
   border-radius: var(--radius-sm);
-  background: var(--accent-crimson-tint);
-  color: var(--accent-crimson-tint-ink);
+  background: var(--sport-gold);
+  color: #08101D;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   white-space: nowrap;
   max-width: 190px;
   overflow: hidden;
@@ -240,19 +283,19 @@ select {
 .btn-install {
   min-height: 40px;
   padding: 0 12px;
-  border: 1px solid var(--brand-navy);
+  border: 1px solid var(--sport-gold);
   border-radius: var(--radius-sm);
-  background: var(--brand-navy);
-  color: var(--brand-navy-ink);
+  background: var(--sport-gold);
+  color: #08101D;
   display: inline-flex;
   align-items: center;
   gap: 6px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .btn-install:hover {
-  background: var(--brand-navy-hover);
+  background: #FDE047;
 }
 
 /* Buttons */
@@ -335,8 +378,10 @@ select {
 
 .btn-compact {
   min-height: 38px;
-  padding: 0 11px;
+  padding: 0 12px;
   font-size: 13px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .btn-ghost-danger {
@@ -430,6 +475,16 @@ select {
   color: var(--ink);
 }
 
+.duck-switch.is-on {
+  border-color: var(--brand-navy);
+}
+
+.duck-switch.is-ducking {
+  border-color: var(--accent-crimson);
+  background: var(--accent-crimson-tint);
+  color: var(--accent-crimson-tint-ink);
+}
+
 .duck-switch__track {
   width: 34px;
   height: 20px;
@@ -445,6 +500,10 @@ select {
   background: var(--brand-navy);
 }
 
+.duck-switch.is-ducking .duck-switch__track {
+  background: var(--accent-crimson);
+}
+
 .duck-switch__thumb {
   width: 16px;
   height: 16px;
@@ -455,6 +514,25 @@ select {
 
 .duck-switch.is-on .duck-switch__thumb {
   transform: translateX(14px);
+}
+
+.duck-switch__state {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--surface-subtle);
+  color: var(--ink-muted);
+}
+
+.duck-switch.is-on .duck-switch__state {
+  background: var(--brand-navy);
+  color: var(--brand-navy-ink);
+}
+
+.duck-switch.is-ducking .duck-switch__state {
+  background: var(--accent-crimson);
+  color: #FFFFFF;
 }
 
 /* Quick Pad Grid */
@@ -563,7 +641,7 @@ select {
 
 .pad-btn:hover {
   background: var(--surface-hover);
-  border-color: var(--ink);
+  border-color: var(--brand-navy);
 }
 
 .pad-btn:active {
@@ -587,12 +665,17 @@ select {
 .pad-btn__channel {
   font-family: var(--font-mono);
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.04em;
   padding: 2px 6px;
   border-radius: 4px;
-  background: var(--surface-subtle);
-  color: var(--ink-muted);
+  background: var(--sport-gold-tint);
+  color: var(--sport-gold-tint-ink);
+}
+
+.pad-btn.is-bgm .pad-btn__channel {
+  background: var(--bgm-tint);
+  color: var(--bgm-tint-ink);
 }
 
 .pad-btn.is-playing .pad-btn__channel {
@@ -988,16 +1071,17 @@ select {
 .channel-tag {
   font-family: var(--font-mono);
   font-size: 10px;
-  font-weight: 600;
-  padding: 3px 6px;
+  font-weight: 700;
+  padding: 2px 6px;
   border-radius: 4px;
-  background: var(--surface-subtle);
-  color: var(--ink-muted);
+  background: var(--bgm-tint);
+  color: var(--bgm-tint-ink);
+  flex-shrink: 0;
 }
 
 .channel-tag.is-sfx {
-  background: var(--accent-crimson-tint);
-  color: var(--accent-crimson-tint-ink);
+  background: var(--sport-gold-tint);
+  color: var(--sport-gold-tint-ink);
 }
 
 .offline-mark {
@@ -1023,7 +1107,7 @@ select {
 }
 
 .fav-btn.is-fav {
-  color: var(--accent-crimson-ink);
+  color: var(--sport-gold-star);
 }
 
 /* Empty State */

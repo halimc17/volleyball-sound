@@ -1,12 +1,12 @@
-# VSOUND Design System
+# VolleyBeats Design System
 
 ## Identity & Mode
-- **Surface mode**: Operate (`impeccable` Operate mode). VSOUND is a live volleyball match soundboard and music library for court audio operators on phones, tablets, and laptops.
+- **Surface mode**: Operate (`impeccable` Operate mode). VolleyBeats is a live volleyball match soundboard and music library for court audio operators on phones, tablets, and laptops.
 - **Dials**: `ENERGY 2` (crisp, purposeful stadium broadcast authority) / `RHYTHM 2` (structured operational deck + tactile Quick Pad grid + scannable track rows) / `MOTION 1` (150ms state feedback and active audio meter only; zero decorative loops; honors `prefers-reduced-motion`).
 
-## Palette (R-25, R-29)
-- **Arena Light (default)**: Canvas `#F4F6F9`, Surface `#FFFFFF`, Subtle surface `#E9EEF5`, Primary Ink `#0B1A2E` (17.48:1), Secondary Ink `#46566E` (7.46:1), PBVSI Navy `#0A2540` (15.54:1 w/ white), Court Crimson accent `#C1121F` (6.22:1 w/ white, used only for live playback state, SFX triggers, and Stop All).
-- **Booth Dark (toggle)**: Canvas `#0B111B`, Surface `#131C2B`, Subtle `#1C283B`, Primary Ink `#F1F5F9` (15.60:1), Secondary Ink `#9FB0C7` (7.74:1), Crimson `#C81E2B` (5.71:1 w/ white), Crimson text `#FF7A85` (6.82:1).
+## Palette: Mikasa Court Pro (R-25, R-29)
+- **Arena Light (default)**: Canvas `#EEF3FA`, Surface `#FFFFFF`, Subtle surface `#E3ECF8`, Primary Ink `#0A1931` (17.55:1), Secondary Ink `#3B4E6B` (8.44:1), Court Blue `#0046AD` (8.47:1 w/ white, header + active controls), Match Gold `#FACC15` (header court stripe + SFX badge tint `#FEF3C7` / `#784700`, 6.99:1), Live Crimson `#C81E2B` (5.71:1 w/ white, active playing state + Auto-Duck `DUCK` + Stop All).
+- **Booth Dark (toggle)**: Canvas `#08101D`, Surface `#101C2F`, Subtle `#182842`, Primary Ink `#F2F6FC` (15.75:1), Secondary Ink `#9DB3D1` (7.97:1), Match Gold `#FACC15` primary controls with dark ink `#08101D` (12.44:1), Court Blue tint `#132B4F` / `#93C5FD` for BGM tags, Live Crimson `#C81E2B` (5.71:1 w/ white).
 
 ## Typography (R-06)
 - **Primary UI**: `Plus Jakarta Sans` — selected for crisp Indonesian and Latin legibility in bright gymnasium lighting across narrow phone screens and desktop consoles.

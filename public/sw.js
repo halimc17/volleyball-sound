@@ -1,5 +1,5 @@
-const SHELL_CACHE = 'vsound-shell-v2';
-const AUDIO_CACHE = 'vsound-audio-v1';
+const SHELL_CACHE = 'volleybeats-shell-v1';
+const AUDIO_CACHE = 'volleybeats-audio-v1';
 
 const SHELL_ASSETS = [
   '/',

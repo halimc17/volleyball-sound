@@ -1,12 +1,12 @@
 {
-  "name": "VSOUND: Volleyball Match Sound Library",
-  "short_name": "VSOUND",
+  "name": "VolleyBeats: Volleyball Match Sound Library",
+  "short_name": "VolleyBeats",
   "description": "Sound library dan match soundboard pertandingan bola voli dengan mode operator BGM + SFX instan.",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#F4F6F9",
-  "theme_color": "#0A2540",
+  "background_color": "#EEF3FA",
+  "theme_color": "#0046AD",
   "lang": "id",
   "icons": [
     {

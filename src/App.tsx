@@ -42,17 +42,21 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
-const FAV_STORAGE_KEY = 'vsound-favorites-v1';
-const THEME_STORAGE_KEY = 'vsound-theme-v1';
-const MC_STORAGE_KEY = 'vsound-mc-script-v1';
-const QUICK_PAD_STORAGE_KEY = 'vsound-quick-pad-v1';
+const FAV_STORAGE_KEY = 'volleybeats-favorites-v1';
+const THEME_STORAGE_KEY = 'volleybeats-theme-v1';
+const MC_STORAGE_KEY = 'volleybeats-mc-script-v1';
+const QUICK_PAD_STORAGE_KEY = 'volleybeats-quick-pad-v1';
+
+function readStorageWithLegacy(key: string, legacyKey: string): string | null {
+  return localStorage.getItem(key) ?? localStorage.getItem(legacyKey);
+}
 
 const DEFAULT_QUICK_PAD_IDS = QUICK_PAD_TRACKS.map((t) => t.id);
 const TRACK_BY_ID = new Map(TRACKS.map((t) => [t.id, t]));
 
 function loadQuickPadIds(): string[] {
   try {
-    const raw = localStorage.getItem(QUICK_PAD_STORAGE_KEY);
+    const raw = readStorageWithLegacy(QUICK_PAD_STORAGE_KEY, 'vsound-quick-pad-v1');
     if (!raw) return DEFAULT_QUICK_PAD_IDS;
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return DEFAULT_QUICK_PAD_IDS;
@@ -64,7 +68,7 @@ function loadQuickPadIds(): string[] {
 
 function loadMcScript(): McScriptData {
   try {
-    const raw = localStorage.getItem(MC_STORAGE_KEY);
+    const raw = readStorageWithLegacy(MC_STORAGE_KEY, 'vsound-mc-script-v1');
     if (!raw) return DEFAULT_MC_SCRIPT;
     return { ...DEFAULT_MC_SCRIPT, ...JSON.parse(raw) };
   } catch {
@@ -74,7 +78,7 @@ function loadMcScript(): McScriptData {
 
 function loadFavorites(): string[] {
   try {
-    const raw = localStorage.getItem(FAV_STORAGE_KEY);
+    const raw = readStorageWithLegacy(FAV_STORAGE_KEY, 'vsound-favorites-v1');
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed : [];
@@ -85,7 +89,7 @@ function loadFavorites(): string[] {
 
 function loadTheme(): ThemeMode {
   try {
-    const saved = localStorage.getItem(THEME_STORAGE_KEY);
+    const saved = readStorageWithLegacy(THEME_STORAGE_KEY, 'vsound-theme-v1');
     if (saved === 'dark' || saved === 'light') return saved;
   } catch {
     // Ignore storage read failures.
@@ -121,7 +125,7 @@ export function App() {
     document.documentElement.setAttribute('data-theme', theme);
     const metaTheme = document.querySelector('meta[name="theme-color"]');
     if (metaTheme) {
-      metaTheme.setAttribute('content', theme === 'dark' ? '#0B111B' : '#0A2540');
+      metaTheme.setAttribute('content', theme === 'dark' ? '#08101D' : '#0046AD');
     }
     try {
       localStorage.setItem(THEME_STORAGE_KEY, theme);
@@ -300,6 +304,15 @@ export function App() {
     });
   }
 
+  function handleToggleAutoDuck(enabled: boolean) {
+    audioEngine.setAutoDuck(enabled);
+    showBriefFeedback(
+      enabled
+        ? 'Auto-Duck BGM: ON (BGM mengecil saat SFX bunyi)'
+        : 'Auto-Duck BGM: OFF (volume BGM tetap)'
+    );
+  }
+
   function handlePlay(track: SoundTrack, forceChannel?: AudioChannel) {
     audioEngine.playTrack(track, forceChannel);
     // Refresh offline badge once the browser caches a played track via Service Worker.
@@ -399,7 +412,7 @@ export function App() {
         <div className="top-bar__brand">
           <BrandMark size={30} />
           <div className="brand-text">
-            <h1 className="brand-name">VSOUND</h1>
+            <h1 className="brand-name">VolleyBeats</h1>
             <span className="brand-sub">Volleyball Match Audio</span>
           </div>
         </div>
@@ -506,7 +519,7 @@ export function App() {
               isCustomized={isQuickPadCustomized}
               onTrigger={(t) => handlePlay(t)}
               onStopSfx={() => audioEngine.stopSfx()}
-              onToggleAutoDuck={(v) => audioEngine.setAutoDuck(v)}
+              onToggleAutoDuck={handleToggleAutoDuck}
               onRemoveTrack={toggleQuickPad}
               onMoveTrack={moveQuickPad}
               onResetDefault={resetQuickPad}
@@ -716,7 +729,7 @@ export function App() {
                 isCustomized={isQuickPadCustomized}
                 onTrigger={(t) => handlePlay(t)}
                 onStopSfx={() => audioEngine.stopSfx()}
-                onToggleAutoDuck={(v) => audioEngine.setAutoDuck(v)}
+                onToggleAutoDuck={handleToggleAutoDuck}
                 onRemoveTrack={toggleQuickPad}
                 onMoveTrack={moveQuickPad}
                 onResetDefault={resetQuickPad}
@@ -747,7 +760,7 @@ export function App() {
         onSfxVolume={(v) => audioEngine.setSfxVolume(v)}
         onFadeDuration={(sec) => audioEngine.setFadeDuration(sec)}
         onToggleLoop={(v) => audioEngine.setBgmLoop(v)}
-        onToggleAutoDuck={(v) => audioEngine.setAutoDuck(v)}
+        onToggleAutoDuck={handleToggleAutoDuck}
         cachedCount={cachedUrls.size}
         totalCount={TRACKS.length}
         cachingProgress={cachingProgress}

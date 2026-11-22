@@ -24,8 +24,22 @@ export interface AudioEngineSnapshot {
 
 type Listener = (snapshot: AudioEngineSnapshot) => void;
 
-const DUCK_MULTIPLIER = 0.22;
-const FADE_STORAGE_KEY = 'vsound-fade-sec-v1';
+const DUCK_MULTIPLIER = 0.16;
+const FADE_STORAGE_KEY = 'volleybeats-fade-sec-v1';
+const LEGACY_FADE_STORAGE_KEY = 'vsound-fade-sec-v1';
+const DUCK_STORAGE_KEY = 'volleybeats-autoduck-v1';
+const AUDIO_CACHE_NAME = 'volleybeats-audio-v1';
+
+function loadAutoDuck(): boolean {
+  try {
+    const raw = localStorage.getItem(DUCK_STORAGE_KEY);
+    if (raw === 'false') return false;
+    if (raw === 'true') return true;
+  } catch {
+    // Ignore storage read errors.
+  }
+  return true;
+}
 
 // Cosine-taper fader curve: smooth onset, even mid decay, silent zero landing without clicks.
 function buildFadeCurve(startGain: number, samples = 128): Float32Array {
@@ -40,7 +54,9 @@ function buildFadeCurve(startGain: number, samples = 128): Float32Array {
 
 function loadFadeDuration(): number {
   try {
-    const raw = Number(localStorage.getItem(FADE_STORAGE_KEY));
+    const raw = Number(
+      localStorage.getItem(FADE_STORAGE_KEY) ?? localStorage.getItem(LEGACY_FADE_STORAGE_KEY)
+    );
     if (raw === 1.5 || raw === 3 || raw === 5) return raw;
   } catch {
     // Ignore storage read errors.
@@ -76,7 +92,7 @@ class MatchAudioEngine {
     sfx: emptyChannel(),
     bgmVolume: 0.9,
     sfxVolume: 1.0,
-    autoDuck: true,
+    autoDuck: loadAutoDuck(),
     isDucking: false,
     isFadingOut: false,
     fadeDurationSec: loadFadeDuration(),
@@ -306,7 +322,9 @@ class MatchAudioEngine {
     const channel = forceChannel ?? track.channel;
     const el = channel === 'bgm' ? this.bgmAudio : this.sfxAudio;
 
-    this.cancelFade();
+    if (this.state.isFadingOut) {
+      this.cancelFade();
+    }
 
     if (channel === 'bgm') {
       const target = this.state.isDucking
@@ -316,6 +334,9 @@ class MatchAudioEngine {
       el.loop = this.state.bgmLoop;
     } else {
       this.setChannelGain('sfx', this.state.sfxVolume, 0.02);
+      if (this.state.autoDuck && this.state.bgm.status === 'playing') {
+        this.applyDuck(true);
+      }
     }
 
     const isSameTrack = this.state[channel].track?.id === track.id;
@@ -548,8 +569,19 @@ class MatchAudioEngine {
 
   setAutoDuck(enabled: boolean) {
     this.state = { ...this.state, autoDuck: enabled };
+    try {
+      localStorage.setItem(DUCK_STORAGE_KEY, String(enabled));
+    } catch {
+      // Ignore storage write errors.
+    }
     if (!enabled && this.state.isDucking) {
       this.applyDuck(false);
+    } else if (
+      enabled &&
+      this.state.sfx.status === 'playing' &&
+      this.state.bgm.status === 'playing'
+    ) {
+      this.applyDuck(true);
     } else {
       this.emit();
     }
@@ -567,7 +599,7 @@ export const audioEngine = new MatchAudioEngine();
 export async function getCachedAudioUrls(): Promise<Set<string>> {
   if (!('caches' in window)) return new Set();
   try {
-    const cache = await caches.open('vsound-audio-v1');
+    const cache = await caches.open(AUDIO_CACHE_NAME);
     const keys = await cache.keys();
     return new Set(keys.map((req) => new URL(req.url).pathname));
   } catch {
@@ -582,7 +614,7 @@ export async function cacheTracksOffline(
   if (!('caches' in window)) {
     return { cached: 0, failed: tracks.length };
   }
-  const cache = await caches.open('vsound-audio-v1');
+  const cache = await caches.open(AUDIO_CACHE_NAME);
   let done = 0;
   let cached = 0;
   let failed = 0;

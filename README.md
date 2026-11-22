@@ -1,4 +1,4 @@
-# VSOUND: Volleyball Match Sound Library
+# VolleyBeats: Volleyball Match Sound Library
 
 Mobile-first PWA sound library dan match soundboard untuk pertandingan bola voli dengan 75 aset audio lokal PBVSI dalam 6 kategori.
 
@@ -32,7 +32,7 @@ Repositori ini sudah dilengkapi `Dockerfile`, `nginx.conf`, dan `.dockerignore` 
 2. Masukkan URL repo: `https://github.com/halimc17/volleyball-sound.git` dan branch `main`.
 3. Set **Build Pack** ke **Dockerfile**.
 4. Set **Ports Exposes** ke `80`.
-5. Isi **Domains** dengan domain HTTPS Anda (misalnya `https://vsound.domainanda.com`) agar fitur PWA install & offline Service Worker aktif di Android/iOS.
+5. Isi **Domains** dengan domain HTTPS Anda (misalnya `https://volleybeats.domainanda.com`) agar fitur PWA install & offline Service Worker aktif di Android/iOS.
 6. (Opsional) Pada tab **Healthcheck**, aktifkan path `/healthz` pada port `80`.
 7. Klik **Deploy**.
 

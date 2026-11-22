@@ -82,14 +82,17 @@ export function QuickPad({
           type="button"
           role="switch"
           aria-checked={audio.autoDuck}
-          className={`duck-switch ${audio.autoDuck ? 'is-on' : ''}`}
+          className={`duck-switch ${audio.autoDuck ? 'is-on' : ''} ${audio.isDucking ? 'is-ducking' : ''}`}
           onClick={() => onToggleAutoDuck(!audio.autoDuck)}
-          title="Otomatis mengecilkan volume BGM saat SFX diputar"
+          title="Otomatis mengecilkan volume BGM ke 16% saat SFX diputar"
         >
           <span className="duck-switch__track" aria-hidden="true">
             <span className="duck-switch__thumb" />
           </span>
           <span className="duck-switch__label">Auto-Duck BGM</span>
+          <span className="duck-switch__state mono-num">
+            {audio.isDucking ? 'DUCK' : audio.autoDuck ? 'ON' : 'OFF'}
+          </span>
         </button>
 
         <span className="count-pill mono-num">{tracks.length} pad</span>
