@@ -23,6 +23,7 @@ interface DeckBarProps {
   onStopSfx: () => void;
   onBgmVolume: (vol: number) => void;
   onSfxVolume: (vol: number) => void;
+  onFadeDuration: (seconds: number) => void;
   onToggleLoop: (enabled: boolean) => void;
   onToggleAutoDuck: (enabled: boolean) => void;
   cachedCount: number;
@@ -50,6 +51,7 @@ export function DeckBar({
   onStopSfx,
   onBgmVolume,
   onSfxVolume,
+  onFadeDuration,
   onToggleLoop,
   onToggleAutoDuck,
   cachedCount,
@@ -152,6 +154,21 @@ export function DeckBar({
               <RepeatIcon size={14} />
               <span>Loop BGM: {audio.bgmLoop ? 'Aktif' : 'Nonaktif'}</span>
             </button>
+
+            <div className="fade-dur-group" role="group" aria-label="Durasi transisi Fade Out">
+              <span className="fade-dur-label">Fade Out:</span>
+              {[1.5, 3, 5].map((sec) => (
+                <button
+                  key={sec}
+                  type="button"
+                  className={`fade-dur-btn mono-num ${audio.fadeDurationSec === sec ? 'is-active' : ''}`}
+                  aria-pressed={audio.fadeDurationSec === sec}
+                  onClick={() => onFadeDuration(sec)}
+                >
+                  {sec}s
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="offline-box">
@@ -243,10 +260,10 @@ export function DeckBar({
 
           <button
             type="button"
-            className="btn-fade"
+            className={`btn-fade ${audio.isFadingOut ? 'is-fading' : ''}`}
             onClick={onFadeOut}
             disabled={!hasActiveAudio || audio.isFadingOut}
-            title="Turunkan volume BGM perlahan lalu berhenti (1.2 detik)"
+            title={`Turunkan volume semua audio perlahan ke mati (${audio.fadeDurationSec} detik)`}
           >
             <FadeOutIcon size={16} />
             <span className="hide-xs">{audio.isFadingOut ? 'Fading...' : 'Fade Out'}</span>

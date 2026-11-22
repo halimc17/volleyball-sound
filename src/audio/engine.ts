@@ -18,13 +18,35 @@ export interface AudioEngineSnapshot {
   autoDuck: boolean;
   isDucking: boolean;
   isFadingOut: boolean;
+  fadeDurationSec: number;
   bgmLoop: boolean;
 }
 
 type Listener = (snapshot: AudioEngineSnapshot) => void;
 
 const DUCK_MULTIPLIER = 0.22;
-const FADE_OUT_MS = 1200;
+const FADE_STORAGE_KEY = 'vsound-fade-sec-v1';
+
+// Cosine-taper fader curve: smooth onset, even mid decay, silent zero landing without clicks.
+function buildFadeCurve(startGain: number, samples = 128): Float32Array {
+  const curve = new Float32Array(samples);
+  for (let i = 0; i < samples; i++) {
+    const t = i / (samples - 1);
+    const weight = Math.pow(Math.cos(t * Math.PI * 0.5), 2.2);
+    curve[i] = i === samples - 1 ? 0 : Math.max(0, startGain * weight);
+  }
+  return curve;
+}
+
+function loadFadeDuration(): number {
+  try {
+    const raw = Number(localStorage.getItem(FADE_STORAGE_KEY));
+    if (raw === 1.5 || raw === 3 || raw === 5) return raw;
+  } catch {
+    // Ignore storage read errors.
+  }
+  return 3;
+}
 
 function emptyChannel(): ChannelState {
   return {
@@ -39,9 +61,15 @@ function emptyChannel(): ChannelState {
 class MatchAudioEngine {
   private bgmAudio: HTMLAudioElement;
   private sfxAudio: HTMLAudioElement;
+  private audioCtx: AudioContext | null = null;
+  private bgmGain: GainNode | null = null;
+  private sfxGain: GainNode | null = null;
+  private webAudioReady = false;
+
   private listeners = new Set<Listener>();
-  private fadeTimer: number | null = null;
-  private duckTimer: number | null = null;
+  private fadeTimeout: number | null = null;
+  private fadeRaf: number | null = null;
+  private duckRaf: number | null = null;
 
   private state: AudioEngineSnapshot = {
     bgm: emptyChannel(),
@@ -51,6 +79,7 @@ class MatchAudioEngine {
     autoDuck: true,
     isDucking: false,
     isFadingOut: false,
+    fadeDurationSec: loadFadeDuration(),
     bgmLoop: false,
   };
 
@@ -65,6 +94,67 @@ class MatchAudioEngine {
 
     this.bindAudioEvents(this.bgmAudio, 'bgm');
     this.bindAudioEvents(this.sfxAudio, 'sfx');
+  }
+
+  // Lazy-init Web Audio GainNodes inside a user gesture so fades work smoothly on iOS/Android/Desktop.
+  private ensureWebAudio() {
+    if (this.webAudioReady && this.audioCtx) {
+      if (this.audioCtx.state === 'suspended') {
+        void this.audioCtx.resume();
+      }
+      return true;
+    }
+
+    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtx) return false;
+
+    try {
+      const ctx = new AudioCtx();
+      const bgmSrc = ctx.createMediaElementSource(this.bgmAudio);
+      const sfxSrc = ctx.createMediaElementSource(this.sfxAudio);
+      const bgmGain = ctx.createGain();
+      const sfxGain = ctx.createGain();
+
+      bgmGain.gain.setValueAtTime(this.state.bgmVolume, ctx.currentTime);
+      sfxGain.gain.setValueAtTime(this.state.sfxVolume, ctx.currentTime);
+
+      bgmSrc.connect(bgmGain).connect(ctx.destination);
+      sfxSrc.connect(sfxGain).connect(ctx.destination);
+
+      // Keep native element volume at 1.0 so GainNode owns the full dynamic range.
+      this.bgmAudio.volume = 1;
+      this.sfxAudio.volume = 1;
+
+      this.audioCtx = ctx;
+      this.bgmGain = bgmGain;
+      this.sfxGain = sfxGain;
+      this.webAudioReady = true;
+
+      if (ctx.state === 'suspended') {
+        void ctx.resume();
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  private setChannelGain(channel: AudioChannel, value: number, rampSec = 0.03) {
+    const clamped = Math.max(0, Math.min(1, value));
+    const gainNode = channel === 'bgm' ? this.bgmGain : this.sfxGain;
+    if (this.webAudioReady && this.audioCtx && gainNode) {
+      const now = this.audioCtx.currentTime;
+      gainNode.gain.cancelScheduledValues(now);
+      gainNode.gain.setValueAtTime(gainNode.gain.value, now);
+      if (rampSec <= 0) {
+        gainNode.gain.setValueAtTime(clamped, now);
+      } else {
+        gainNode.gain.linearRampToValueAtTime(clamped, now + rampSec);
+      }
+    } else {
+      const el = channel === 'bgm' ? this.bgmAudio : this.sfxAudio;
+      el.volume = clamped;
+    }
   }
 
   private bindAudioEvents(el: HTMLAudioElement, channel: AudioChannel) {
@@ -86,7 +176,7 @@ class MatchAudioEngine {
         duration: Number.isFinite(el.duration) ? el.duration : this.state[channel].duration,
         error: null,
       });
-      if (channel === 'sfx' && this.state.autoDuck && this.state.bgm.status === 'playing') {
+      if (channel === 'sfx' && this.state.autoDuck && this.state.bgm.status === 'playing' && !this.state.isFadingOut) {
         this.applyDuck(true);
       }
     });
@@ -148,9 +238,18 @@ class MatchAudioEngine {
   }
 
   private cancelFade() {
-    if (this.fadeTimer !== null) {
-      window.clearInterval(this.fadeTimer);
-      this.fadeTimer = null;
+    if (this.fadeTimeout !== null) {
+      window.clearTimeout(this.fadeTimeout);
+      this.fadeTimeout = null;
+    }
+    if (this.fadeRaf !== null) {
+      window.cancelAnimationFrame(this.fadeRaf);
+      this.fadeRaf = null;
+    }
+    if (this.webAudioReady && this.audioCtx) {
+      const now = this.audioCtx.currentTime;
+      this.bgmGain?.gain.cancelScheduledValues(now);
+      this.sfxGain?.gain.cancelScheduledValues(now);
     }
     if (this.state.isFadingOut) {
       this.state = { ...this.state, isFadingOut: false };
@@ -158,30 +257,32 @@ class MatchAudioEngine {
   }
 
   private applyDuck(duck: boolean) {
-    if (this.duckTimer !== null) {
-      window.clearInterval(this.duckTimer);
-      this.duckTimer = null;
+    if (this.duckRaf !== null) {
+      window.cancelAnimationFrame(this.duckRaf);
+      this.duckRaf = null;
     }
     if (this.state.isFadingOut) return;
 
     const target = duck ? this.state.bgmVolume * DUCK_MULTIPLIER : this.state.bgmVolume;
     this.state = { ...this.state, isDucking: duck };
 
-    const startVol = this.bgmAudio.volume;
-    const steps = 10;
-    let step = 0;
-    this.duckTimer = window.setInterval(() => {
-      step++;
-      const ratio = step / steps;
-      const next = startVol + (target - startVol) * ratio;
-      this.bgmAudio.volume = Math.max(0, Math.min(1, next));
-      if (step >= steps) {
-        if (this.duckTimer !== null) {
-          window.clearInterval(this.duckTimer);
-          this.duckTimer = null;
-        }
-      }
-    }, 22);
+    if (this.webAudioReady && this.audioCtx && this.bgmGain) {
+      const now = this.audioCtx.currentTime;
+      const rampSec = duck ? 0.18 : 0.45;
+      this.bgmGain.gain.cancelScheduledValues(now);
+      this.bgmGain.gain.setValueAtTime(this.bgmGain.gain.value, now);
+      this.bgmGain.gain.linearRampToValueAtTime(target, now + rampSec);
+    } else {
+      const startVol = this.bgmAudio.volume;
+      const durationMs = duck ? 180 : 450;
+      const startTime = performance.now();
+      const tick = (now: number) => {
+        const t = Math.min(1, (now - startTime) / durationMs);
+        this.bgmAudio.volume = Math.max(0, Math.min(1, startVol + (target - startVol) * t));
+        if (t < 1) this.duckRaf = window.requestAnimationFrame(tick);
+      };
+      this.duckRaf = window.requestAnimationFrame(tick);
+    }
 
     this.emit();
   }
@@ -201,17 +302,20 @@ class MatchAudioEngine {
   }
 
   playTrack(track: SoundTrack, forceChannel?: AudioChannel) {
+    this.ensureWebAudio();
     const channel = forceChannel ?? track.channel;
     const el = channel === 'bgm' ? this.bgmAudio : this.sfxAudio;
 
+    this.cancelFade();
+
     if (channel === 'bgm') {
-      this.cancelFade();
-      el.volume = this.state.isDucking
+      const target = this.state.isDucking
         ? this.state.bgmVolume * DUCK_MULTIPLIER
         : this.state.bgmVolume;
+      this.setChannelGain('bgm', target, 0.04);
       el.loop = this.state.bgmLoop;
     } else {
-      el.volume = this.state.sfxVolume;
+      this.setChannelGain('sfx', this.state.sfxVolume, 0.02);
     }
 
     const isSameTrack = this.state[channel].track?.id === track.id;
@@ -272,14 +376,16 @@ class MatchAudioEngine {
 
   toggleBgmPlayPause() {
     if (!this.state.bgm.track) return;
+    this.ensureWebAudio();
     if (this.state.bgm.status === 'playing') {
       this.cancelFade();
       this.bgmAudio.pause();
     } else {
       this.cancelFade();
-      this.bgmAudio.volume = this.state.isDucking
+      const target = this.state.isDucking
         ? this.state.bgmVolume * DUCK_MULTIPLIER
         : this.state.bgmVolume;
+      this.setChannelGain('bgm', target, 0.04);
       void this.bgmAudio.play().catch(() => {
         this.updateChannel('bgm', {
           status: 'error',
@@ -299,23 +405,24 @@ class MatchAudioEngine {
   stopSfx() {
     this.sfxAudio.pause();
     this.sfxAudio.currentTime = 0;
+    this.setChannelGain('sfx', this.state.sfxVolume, 0);
     this.updateChannel('sfx', { status: 'idle', currentTime: 0 });
     this.applyDuck(false);
   }
 
   stopAll() {
     this.cancelFade();
-    if (this.duckTimer !== null) {
-      window.clearInterval(this.duckTimer);
-      this.duckTimer = null;
+    if (this.duckRaf !== null) {
+      window.cancelAnimationFrame(this.duckRaf);
+      this.duckRaf = null;
     }
     this.bgmAudio.pause();
     this.bgmAudio.currentTime = 0;
-    this.bgmAudio.volume = this.state.bgmVolume;
-
     this.sfxAudio.pause();
     this.sfxAudio.currentTime = 0;
-    this.sfxAudio.volume = this.state.sfxVolume;
+
+    this.setChannelGain('bgm', this.state.bgmVolume, 0);
+    this.setChannelGain('sfx', this.state.sfxVolume, 0);
 
     this.state = {
       ...this.state,
@@ -327,46 +434,94 @@ class MatchAudioEngine {
     this.emit();
   }
 
-  fadeOutBgm() {
-    if (this.state.bgm.status !== 'playing') {
-      if (this.state.sfx.status === 'playing') this.stopSfx();
-      return;
-    }
+  // Perceptually smooth logarithmic fade-out across all active channels (BGM and SFX).
+  fadeOutAll() {
+    const bgmActive = this.state.bgm.status === 'playing';
+    const sfxActive = this.state.sfx.status === 'playing';
+    if (!bgmActive && !sfxActive) return;
+
+    this.ensureWebAudio();
     this.cancelFade();
-    this.state = { ...this.state, isFadingOut: true };
+    if (this.duckRaf !== null) {
+      window.cancelAnimationFrame(this.duckRaf);
+      this.duckRaf = null;
+    }
+
+    const fadeSec = this.state.fadeDurationSec;
+    this.state = { ...this.state, isFadingOut: true, isDucking: false };
     this.emit();
 
-    const startVol = this.bgmAudio.volume;
-    const steps = 24;
-    const stepMs = FADE_OUT_MS / steps;
-    let step = 0;
+    const finishFade = () => {
+      this.fadeTimeout = null;
+      this.fadeRaf = null;
 
-    this.fadeTimer = window.setInterval(() => {
-      step++;
-      const t = step / steps;
-      const eased = (1 - t) * (1 - t);
-      this.bgmAudio.volume = Math.max(0, startVol * eased);
-
-      if (step >= steps) {
-        this.cancelFade();
+      if (bgmActive) {
         this.bgmAudio.pause();
         this.bgmAudio.currentTime = 0;
-        this.bgmAudio.volume = this.state.bgmVolume;
-        this.state = {
-          ...this.state,
-          isFadingOut: false,
-          bgm: { ...this.state.bgm, status: 'idle', currentTime: 0 },
-        };
-        this.emit();
       }
-    }, stepMs);
+      if (sfxActive) {
+        this.sfxAudio.pause();
+        this.sfxAudio.currentTime = 0;
+      }
+
+      // Restore channel gain cleanly while paused so the next track plays at full set volume.
+      this.setChannelGain('bgm', this.state.bgmVolume, 0);
+      this.setChannelGain('sfx', this.state.sfxVolume, 0);
+
+      this.state = {
+        ...this.state,
+        isFadingOut: false,
+        isDucking: false,
+        bgm: bgmActive ? { ...this.state.bgm, status: 'idle', currentTime: 0 } : this.state.bgm,
+        sfx: sfxActive ? { ...this.state.sfx, status: 'idle', currentTime: 0 } : this.state.sfx,
+      };
+      this.emit();
+    };
+
+    if (this.webAudioReady && this.audioCtx && this.bgmGain && this.sfxGain) {
+      const now = this.audioCtx.currentTime;
+
+      const scheduleNode = (node: GainNode) => {
+        const current = Math.max(0, Math.min(1, node.gain.value));
+        node.gain.cancelScheduledValues(now);
+        node.gain.setValueCurveAtTime(buildFadeCurve(current), now, fadeSec);
+      };
+
+      if (bgmActive) scheduleNode(this.bgmGain);
+      if (sfxActive) scheduleNode(this.sfxGain);
+
+      this.fadeTimeout = window.setTimeout(finishFade, Math.round(fadeSec * 1000) + 50);
+      return;
+    }
+
+    // Fallback when Web Audio API is unavailable: same studio cosine-taper curve via rAF.
+    const startBgm = this.bgmAudio.volume;
+    const startSfx = this.sfxAudio.volume;
+    const durationMs = fadeSec * 1000;
+    const startTime = performance.now();
+
+    const step = (now: number) => {
+      const t = Math.min(1, (now - startTime) / durationMs);
+      const curve = t >= 1 ? 0 : Math.pow(Math.cos(t * Math.PI * 0.5), 2.2);
+      if (bgmActive) this.bgmAudio.volume = Math.max(0, startBgm * curve);
+      if (sfxActive) this.sfxAudio.volume = Math.max(0, startSfx * curve);
+
+      if (t < 1) {
+        this.fadeRaf = window.requestAnimationFrame(step);
+      } else {
+        finishFade();
+      }
+    };
+
+    this.fadeRaf = window.requestAnimationFrame(step);
   }
 
   setBgmVolume(vol: number) {
     const clamped = Math.max(0, Math.min(1, vol));
     this.state = { ...this.state, bgmVolume: clamped };
     if (!this.state.isFadingOut) {
-      this.bgmAudio.volume = this.state.isDucking ? clamped * DUCK_MULTIPLIER : clamped;
+      const target = this.state.isDucking ? clamped * DUCK_MULTIPLIER : clamped;
+      this.setChannelGain('bgm', target, 0.03);
     }
     this.emit();
   }
@@ -374,7 +529,20 @@ class MatchAudioEngine {
   setSfxVolume(vol: number) {
     const clamped = Math.max(0, Math.min(1, vol));
     this.state = { ...this.state, sfxVolume: clamped };
-    this.sfxAudio.volume = clamped;
+    if (!this.state.isFadingOut) {
+      this.setChannelGain('sfx', clamped, 0.03);
+    }
+    this.emit();
+  }
+
+  setFadeDuration(seconds: number) {
+    const clamped = Math.max(0.5, Math.min(8, seconds));
+    this.state = { ...this.state, fadeDurationSec: clamped };
+    try {
+      localStorage.setItem(FADE_STORAGE_KEY, String(clamped));
+    } catch {
+      // Ignore storage write errors.
+    }
     this.emit();
   }
 

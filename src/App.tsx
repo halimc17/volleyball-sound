@@ -634,11 +634,12 @@ export function App() {
         onToggleMixer={() => setMixerOpen((v) => !v)}
         onTogglePlayPause={() => audioEngine.toggleBgmPlayPause()}
         onSeek={(sec) => audioEngine.seekBgm(sec)}
-        onFadeOut={() => audioEngine.fadeOutBgm()}
+        onFadeOut={() => audioEngine.fadeOutAll()}
         onStopAll={() => audioEngine.stopAll()}
         onStopSfx={() => audioEngine.stopSfx()}
         onBgmVolume={(v) => audioEngine.setBgmVolume(v)}
         onSfxVolume={(v) => audioEngine.setSfxVolume(v)}
+        onFadeDuration={(sec) => audioEngine.setFadeDuration(sec)}
         onToggleLoop={(v) => audioEngine.setBgmLoop(v)}
         onToggleAutoDuck={(v) => audioEngine.setAutoDuck(v)}
         cachedCount={cachedUrls.size}

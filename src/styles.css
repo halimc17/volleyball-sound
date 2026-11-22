@@ -1127,6 +1127,51 @@ select {
   background: var(--surface-subtle);
 }
 
+.btn-fade.is-fading {
+  opacity: 1;
+  border-color: var(--brand-navy);
+  background: var(--brand-navy);
+  color: var(--brand-navy-ink);
+}
+
+.fade-dur-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 4px 3px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+}
+
+.fade-dur-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-muted);
+  margin-right: 4px;
+}
+
+.fade-dur-btn {
+  min-width: 40px;
+  min-height: 32px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.fade-dur-btn:hover {
+  background: var(--surface-subtle);
+}
+
+.fade-dur-btn.is-active {
+  background: var(--brand-navy);
+  color: var(--brand-navy-ink);
+}
+
 .btn-stop-all {
   min-height: 44px;
   padding: 0 12px;
