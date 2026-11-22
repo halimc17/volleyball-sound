@@ -1,0 +1,10 @@
+.git
+.gitignore
+node_modules
+dist
+.vite
+DESIGN.md
+README.md
+*.local
+.DS_Store
+Thumbs.db

@@ -23,3 +23,16 @@ Untuk build produksi dan preview:
 npm run build
 npm run preview
 ```
+
+## Deploy ke Coolify
+
+Repositori ini sudah dilengkapi `Dockerfile`, `nginx.conf`, dan `.dockerignore` siap pakai untuk Coolify:
+
+1. Di dashboard Coolify, pilih **+ New Resource** -> **Public Repository** (atau **Private Repository** via GitHub App).
+2. Masukkan URL repo: `https://github.com/halimc17/volleyball-sound.git` dan branch `main`.
+3. Set **Build Pack** ke **Dockerfile**.
+4. Set **Ports Exposes** ke `80`.
+5. Isi **Domains** dengan domain HTTPS Anda (misalnya `https://vsound.domainanda.com`) agar fitur PWA install & offline Service Worker aktif di Android/iOS.
+6. (Opsional) Pada tab **Healthcheck**, aktifkan path `/healthz` pada port `80`.
+7. Klik **Deploy**.
+
