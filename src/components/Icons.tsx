@@ -194,3 +194,36 @@ export function VolumeIcon({ size = 16, className }: IconProps) {
     </svg>
   );
 }
+
+export function ArrowLeftIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base} className={className}>
+      <path d="M15 6l-6 6 6 6" />
+    </svg>
+  );
+}
+
+export function ArrowRightIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base} className={className}>
+      <path d="M9 6l6 6-6 6" />
+    </svg>
+  );
+}
+
+export function ResetIcon({ size = 15, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base} className={className}>
+      <path d="M4 12a8 8 0 1 0 2.3-5.6L4 8.7" />
+      <path d="M4 4v4.7h4.7" />
+    </svg>
+  );
+}
+
+export function PlusIcon({ size = 15, className }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base} className={className}>
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  );
+}

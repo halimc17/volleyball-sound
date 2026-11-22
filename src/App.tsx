@@ -8,6 +8,7 @@ import {
 import {
   CATEGORIES,
   DEFAULT_MC_SCRIPT,
+  QUICK_PAD_TRACKS,
   TRACKS,
   type AudioChannel,
   type CategoryId,
@@ -44,6 +45,22 @@ interface BeforeInstallPromptEvent extends Event {
 const FAV_STORAGE_KEY = 'vsound-favorites-v1';
 const THEME_STORAGE_KEY = 'vsound-theme-v1';
 const MC_STORAGE_KEY = 'vsound-mc-script-v1';
+const QUICK_PAD_STORAGE_KEY = 'vsound-quick-pad-v1';
+
+const DEFAULT_QUICK_PAD_IDS = QUICK_PAD_TRACKS.map((t) => t.id);
+const TRACK_BY_ID = new Map(TRACKS.map((t) => [t.id, t]));
+
+function loadQuickPadIds(): string[] {
+  try {
+    const raw = localStorage.getItem(QUICK_PAD_STORAGE_KEY);
+    if (!raw) return DEFAULT_QUICK_PAD_IDS;
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return DEFAULT_QUICK_PAD_IDS;
+    return parsed.filter((id): id is string => typeof id === 'string' && TRACK_BY_ID.has(id));
+  } catch {
+    return DEFAULT_QUICK_PAD_IDS;
+  }
+}
 
 function loadMcScript(): McScriptData {
   try {
@@ -85,6 +102,7 @@ export function App() {
   const [channelFilter, setChannelFilter] = useState<ChannelFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [favorites, setFavorites] = useState<string[]>(loadFavorites);
+  const [quickPadIds, setQuickPadIds] = useState<string[]>(loadQuickPadIds);
   const [mcScript, setMcScript] = useState<McScriptData>(loadMcScript);
   const [mixerOpen, setMixerOpen] = useState(false);
   const [cachedUrls, setCachedUrls] = useState<Set<string>>(() => new Set());
@@ -181,6 +199,80 @@ export function App() {
   }, []);
 
   const favoriteSet = useMemo(() => new Set(favorites), [favorites]);
+  const quickPadSet = useMemo(() => new Set(quickPadIds), [quickPadIds]);
+
+  const quickPadTracks = useMemo(
+    () =>
+      quickPadIds
+        .map((id) => TRACK_BY_ID.get(id))
+        .filter((t): t is SoundTrack => Boolean(t)),
+    [quickPadIds]
+  );
+
+  const isQuickPadCustomized = useMemo(() => {
+    if (quickPadIds.length !== DEFAULT_QUICK_PAD_IDS.length) return true;
+    return quickPadIds.some((id, i) => id !== DEFAULT_QUICK_PAD_IDS[i]);
+  }, [quickPadIds]);
+
+  function saveQuickPadIds(next: string[]) {
+    try {
+      localStorage.setItem(QUICK_PAD_STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      // Ignore storage write failures.
+    }
+  }
+
+  function showBriefFeedback(message: string) {
+    setShortcutFeedback(message);
+    if (feedbackTimerRef.current !== null) {
+      window.clearTimeout(feedbackTimerRef.current);
+    }
+    feedbackTimerRef.current = window.setTimeout(() => setShortcutFeedback(null), 1800);
+  }
+
+  function toggleQuickPad(trackId: string) {
+    const track = TRACK_BY_ID.get(trackId);
+    setQuickPadIds((prev) => {
+      const exists = prev.includes(trackId);
+      const next = exists ? prev.filter((id) => id !== trackId) : [...prev, trackId];
+      saveQuickPadIds(next);
+      if (track) {
+        showBriefFeedback(
+          exists
+            ? `Dihapus dari Quick Pad: ${track.quickPadLabel ?? track.title}`
+            : `Ditambahkan ke Quick Pad: ${track.quickPadLabel ?? track.title}`
+        );
+      }
+      return next;
+    });
+  }
+
+  function moveQuickPad(trackId: string, direction: -1 | 1) {
+    setQuickPadIds((prev) => {
+      const idx = prev.indexOf(trackId);
+      const targetIdx = idx + direction;
+      if (idx === -1 || targetIdx < 0 || targetIdx >= prev.length) return prev;
+      const next = [...prev];
+      const [item] = next.splice(idx, 1);
+      next.splice(targetIdx, 0, item);
+      saveQuickPadIds(next);
+      return next;
+    });
+  }
+
+  function resetQuickPad() {
+    setQuickPadIds(DEFAULT_QUICK_PAD_IDS);
+    saveQuickPadIds(DEFAULT_QUICK_PAD_IDS);
+    showBriefFeedback('Quick Pad dikembalikan ke 8 pad default');
+  }
+
+  function goToLibraryToAddPad() {
+    setSelectedFilter('all');
+    setMobileTab('library');
+    window.setTimeout(() => {
+      searchInputRef.current?.focus();
+    }, 60);
+  }
 
   function updateMcField<K extends keyof McScriptData>(key: K, value: string) {
     setMcScript((prev) => {
@@ -409,10 +501,16 @@ export function App() {
         <main id="main-content" className="main-stage">
           <div className={`mobile-view ${mobileTab === 'pad' ? 'is-visible' : 'is-hidden-mobile'} only-mobile`}>
             <QuickPad
+              tracks={quickPadTracks}
               audio={audio}
+              isCustomized={isQuickPadCustomized}
               onTrigger={(t) => handlePlay(t)}
               onStopSfx={() => audioEngine.stopSfx()}
               onToggleAutoDuck={(v) => audioEngine.setAutoDuck(v)}
+              onRemoveTrack={toggleQuickPad}
+              onMoveTrack={moveQuickPad}
+              onResetDefault={resetQuickPad}
+              onGoAddSound={goToLibraryToAddPad}
             />
           </div>
 
@@ -573,9 +671,11 @@ export function App() {
                     track={track}
                     audio={audio}
                     isFavorite={favoriteSet.has(track.id)}
+                    isInQuickPad={quickPadSet.has(track.id)}
                     isOfflineCached={cachedUrls.has(track.src)}
                     onPlay={handlePlay}
                     onToggleFavorite={toggleFavorite}
+                    onToggleQuickPad={toggleQuickPad}
                   />
                 ))}
               </div>
@@ -611,10 +711,16 @@ export function App() {
             {desktopRightTab === 'pad' ? (
               <QuickPad
                 compact
+                tracks={quickPadTracks}
                 audio={audio}
+                isCustomized={isQuickPadCustomized}
                 onTrigger={(t) => handlePlay(t)}
                 onStopSfx={() => audioEngine.stopSfx()}
                 onToggleAutoDuck={(v) => audioEngine.setAutoDuck(v)}
+                onRemoveTrack={toggleQuickPad}
+                onMoveTrack={moveQuickPad}
+                onResetDefault={resetQuickPad}
+                onGoAddSound={goToLibraryToAddPad}
               />
             ) : (
               <McScriptPanel

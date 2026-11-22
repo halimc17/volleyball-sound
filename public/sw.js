@@ -1,4 +1,4 @@
-const SHELL_CACHE = 'vsound-shell-v1';
+const SHELL_CACHE = 'vsound-shell-v2';
 const AUDIO_CACHE = 'vsound-audio-v1';
 
 const SHELL_ASSETS = [
@@ -52,17 +52,35 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // App shell & built JS/CSS: stale-while-revalidate.
+  // HTML / navigation: network-first so Coolify redeploys take effect immediately when online.
+  if (request.mode === 'navigate' || url.pathname === '/' || url.pathname === '/index.html') {
+    event.respondWith(
+      caches.open(SHELL_CACHE).then(async (cache) => {
+        try {
+          const network = await fetch(request);
+          if (network.status === 200) {
+            cache.put(request, network.clone());
+          }
+          return network;
+        } catch {
+          const cached = await cache.match(request);
+          return cached || (await cache.match('/index.html'));
+        }
+      })
+    );
+    return;
+  }
+
+  // Hashed static assets & icons: cache-first with network fallback.
   event.respondWith(
     caches.open(SHELL_CACHE).then(async (cache) => {
       const cached = await cache.match(request);
-      const networkPromise = fetch(request)
-        .then((res) => {
-          if (res.status === 200) cache.put(request, res.clone());
-          return res;
-        })
-        .catch(() => cached);
-      return cached || networkPromise;
+      if (cached) return cached;
+      const network = await fetch(request);
+      if (network.status === 200) {
+        cache.put(request, network.clone());
+      }
+      return network;
     })
   );
 });

@@ -5,9 +5,16 @@ import './styles.css';
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    void navigator.serviceWorker.register('/sw.js').catch(() => {
-      // Service worker registration may fail on non-HTTPS LAN origins during local dev.
-    });
+    if (import.meta.env.PROD) {
+      void navigator.serviceWorker.register('/sw.js').catch(() => {
+        // Service worker registration may fail on non-HTTPS LAN origins.
+      });
+    } else {
+      // Unregister stale SW in local dev so Vite HMR and edits reflect immediately.
+      void navigator.serviceWorker.getRegistrations().then((regs) => {
+        regs.forEach((reg) => void reg.unregister());
+      });
+    }
   });
 }
 

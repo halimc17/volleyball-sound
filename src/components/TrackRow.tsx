@@ -1,14 +1,16 @@
 import type { AudioEngineSnapshot } from '../audio/engine';
 import type { AudioChannel, SoundTrack } from '../data/catalog';
-import { CheckIcon, PauseIcon, PlayIcon, StarIcon } from './Icons';
+import { CheckIcon, PadGridIcon, PauseIcon, PlayIcon, StarIcon } from './Icons';
 
 interface TrackRowProps {
   track: SoundTrack;
   audio: AudioEngineSnapshot;
   isFavorite: boolean;
+  isInQuickPad: boolean;
   isOfflineCached: boolean;
   onPlay: (track: SoundTrack, forceChannel?: AudioChannel) => void;
   onToggleFavorite: (trackId: string) => void;
+  onToggleQuickPad: (trackId: string) => void;
 }
 
 export function formatBytes(bytes: number): string {
@@ -22,9 +24,11 @@ export function TrackRow({
   track,
   audio,
   isFavorite,
+  isInQuickPad,
   isOfflineCached,
   onPlay,
   onToggleFavorite,
+  onToggleQuickPad,
 }: TrackRowProps) {
   const activeOnBgm = audio.bgm.track?.id === track.id;
   const activeOnSfx = audio.sfx.track?.id === track.id;
@@ -68,9 +72,12 @@ export function TrackRow({
         >
           <span className="track-row__title">{track.title}</span>
           <span className="track-row__meta">
-            <span>{track.subtitle}</span>
+            <span className={`channel-tag ${track.channel === 'sfx' ? 'is-sfx' : 'is-bgm'}`}>
+              {track.channel.toUpperCase()}
+            </span>
+            <span className="track-row__sub">{track.subtitle}</span>
             <span className="meta-sep" aria-hidden="true">/</span>
-            <span className="mono-num">{formatBytes(track.sizeBytes)}</span>
+            <span className="mono-num track-row__size">{formatBytes(track.sizeBytes)}</span>
             {track.shortcut && (
               <span className="desktop-kbd-meta">
                 <span className="meta-sep" aria-hidden="true">/</span>
@@ -97,13 +104,6 @@ export function TrackRow({
       </div>
 
       <div className="track-row__actions">
-        <span
-          className={`channel-tag ${track.channel === 'sfx' ? 'is-sfx' : 'is-bgm'}`}
-          title={track.channel === 'sfx' ? 'Diputar di channel SFX instan' : 'Diputar di channel BGM deck'}
-        >
-          {track.channel.toUpperCase()}
-        </span>
-
         {isOfflineCached && (
           <span className="offline-mark" title="Tersimpan di cache offline perangkat">
             <CheckIcon size={13} />
@@ -112,10 +112,26 @@ export function TrackRow({
 
         <button
           type="button"
+          className={`icon-btn pad-pin-btn ${isInQuickPad ? 'is-pinned' : ''}`}
+          onClick={() => onToggleQuickPad(track.id)}
+          aria-label={
+            isInQuickPad
+              ? `Hapus ${track.title} dari Quick Pad`
+              : `Tambahkan ${track.title} ke Quick Pad`
+          }
+          aria-pressed={isInQuickPad}
+          title={isInQuickPad ? 'Terpasang di Quick Pad (ketuk untuk hapus)' : 'Tambahkan ke Quick Pad'}
+        >
+          <PadGridIcon size={17} />
+        </button>
+
+        <button
+          type="button"
           className={`icon-btn fav-btn ${isFavorite ? 'is-fav' : ''}`}
           onClick={() => onToggleFavorite(track.id)}
           aria-label={isFavorite ? `Hapus ${track.title} dari favorit` : `Tambahkan ${track.title} ke favorit`}
           aria-pressed={isFavorite}
+          title={isFavorite ? 'Hapus dari Favorit' : 'Tambahkan ke Favorit'}
         >
           <StarIcon size={18} filled={isFavorite} />
         </button>
