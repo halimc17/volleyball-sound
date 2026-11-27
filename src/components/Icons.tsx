@@ -15,11 +15,11 @@ const base = {
 export function BrandMark({ size = 28, className }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" fill="none" className={className} aria-hidden="true">
-      <rect width="32" height="32" rx="8" fill="var(--brand-mark-bg)" />
+      <rect width="32" height="32" rx="16" fill="var(--brand-mark-bg)" />
       <circle cx="16" cy="16" r="10" stroke="#FFFFFF" strokeWidth="1.75" />
       <path d="M9 11C13 12 16.5 14.5 19 19" stroke="#FFFFFF" strokeWidth="1.6" strokeLinecap="round" />
       <path d="M22.5 9.5C18.5 11.5 16 15 15 19.5" stroke="#FFFFFF" strokeWidth="1.6" strokeLinecap="round" />
-      <path d="M8.5 21C12.5 19 17 18.5 23.5 21" stroke="#FACC15" strokeWidth="2.3" strokeLinecap="round" />
+      <path d="M8.5 21C12.5 19 17 18.5 23.5 21" stroke="#EE4D22" strokeWidth="2.3" strokeLinecap="round" />
     </svg>
   );
 }

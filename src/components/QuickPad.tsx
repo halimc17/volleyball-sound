@@ -36,6 +36,8 @@ const PAD_HINTS: Record<string, string> = {
   'Time Out': 'Official PBVSI 30s',
 };
 
+const MAX_DOT_SLOTS = 12;
+
 export function QuickPad({
   tracks,
   audio,
@@ -51,51 +53,69 @@ export function QuickPad({
 }: QuickPadProps) {
   const uid = useId();
   const [editMode, setEditMode] = useState(false);
+  const litSlots = Math.min(MAX_DOT_SLOTS, tracks.length);
 
   return (
     <section
       className={`quick-pad ${compact ? 'quick-pad--compact' : ''}`}
       aria-labelledby={`${uid}-heading`}
     >
-      <div className="section-head">
+      <div className="pad-status-bento">
+        <button
+          type="button"
+          role="switch"
+          aria-checked={audio.autoDuck}
+          className={`bento-duck-card ${audio.autoDuck ? 'is-on' : ''} ${audio.isDucking ? 'is-ducking' : ''}`}
+          onClick={() => onToggleAutoDuck(!audio.autoDuck)}
+          title="Otomatis mengecilkan volume BGM ke 16% saat SFX diputar"
+        >
+          <span className="bento-card__eyebrow">Auto-Duck BGM</span>
+          <span className="bento-duck-card__bottom">
+            <span className="bento-duck-card__status">
+              {audio.isDucking ? 'Ducking' : audio.autoDuck ? 'Active' : 'Off'}
+            </span>
+            <span className="duck-switch__track" aria-hidden="true">
+              <span className="duck-switch__thumb" />
+            </span>
+          </span>
+        </button>
+
+        <div className="bento-count-card">
+          <div className="bento-count-card__top">
+            <div>
+              <span className="bento-card__eyebrow">Quick Pad</span>
+              <div className="bento-count-card__num mono-num">
+                {tracks.length} <span className="bento-count-card__unit">pad</span>
+              </div>
+            </div>
+            <button
+              type="button"
+              className={`btn-secondary btn-compact ${editMode ? 'is-editing' : ''}`}
+              aria-expanded={editMode}
+              onClick={() => setEditMode((v) => !v)}
+            >
+              {editMode ? 'Selesai' : 'Atur Pad'}
+            </button>
+          </div>
+          <div className="bento-dot-bar" aria-hidden="true">
+            {Array.from({ length: MAX_DOT_SLOTS }, (_, i) => (
+              <span key={i} className={`bento-dot ${i < litSlots ? 'is-lit' : ''}`} />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="section-head section-head--compact">
         <div>
-          <h2 id={`${uid}-heading`} className="section-title">Quick Pad SFX</h2>
+          <h2 id={`${uid}-heading`} className="section-title">
+            Quick Pad <span className="section-title-muted">SFX</span>
+          </h2>
           <p className="section-sub">
             {editMode
               ? 'Atur urutan atau hapus sound dari Quick Pad.'
               : 'Ketuk langsung untuk efek momen pertandingan.'}
           </p>
         </div>
-
-        <button
-          type="button"
-          className={`btn-secondary btn-compact ${editMode ? 'is-editing' : ''}`}
-          aria-expanded={editMode}
-          onClick={() => setEditMode((v) => !v)}
-        >
-          {editMode ? 'Selesai' : 'Atur Pad'}
-        </button>
-      </div>
-
-      <div className="pad-toolbar">
-        <button
-          type="button"
-          role="switch"
-          aria-checked={audio.autoDuck}
-          className={`duck-switch ${audio.autoDuck ? 'is-on' : ''} ${audio.isDucking ? 'is-ducking' : ''}`}
-          onClick={() => onToggleAutoDuck(!audio.autoDuck)}
-          title="Otomatis mengecilkan volume BGM ke 16% saat SFX diputar"
-        >
-          <span className="duck-switch__track" aria-hidden="true">
-            <span className="duck-switch__thumb" />
-          </span>
-          <span className="duck-switch__label">Auto-Duck BGM</span>
-          <span className="duck-switch__state mono-num">
-            {audio.isDucking ? 'DUCK' : audio.autoDuck ? 'ON' : 'OFF'}
-          </span>
-        </button>
-
-        <span className="count-pill mono-num">{tracks.length} pad</span>
       </div>
 
       {editMode && (

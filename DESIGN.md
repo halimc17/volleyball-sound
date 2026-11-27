@@ -2,18 +2,23 @@
 
 ## Identity & Mode
 - **Surface mode**: Operate (`impeccable` Operate mode). VolleyBeats is a live volleyball match soundboard and music library for court audio operators on phones, tablets, and laptops.
-- **Dials**: `ENERGY 2` (crisp, purposeful stadium broadcast authority) / `RHYTHM 2` (structured operational deck + tactile Quick Pad grid + scannable track rows) / `MOTION 1` (150ms state feedback and active audio meter only; zero decorative loops; honors `prefers-reduced-motion`).
+- **Aesthetic**: Industrial-Tactile Console (inspired by the Tally mobile reference): warm stone canvas, crisp white rounded cards, matte obsidian hero deck and floating pill navigation dock, vermilion signal orange accents, and dot-matrix playback indicators.
+- **Dials**: `ENERGY 2` (tactile contrast between warm stone, pure white, matte black, and vermilion) / `RHYTHM 2` (matte black hero deck + 2-card bento status row + 2-column pad grid + pill library list) / `MOTION 1` (140ms state feedback only; zero decorative loops; honors `prefers-reduced-motion`).
 
-## Palette: Mikasa Court Pro (R-25, R-29)
-- **Arena Light (default)**: Canvas `#EEF3FA`, Surface `#FFFFFF`, Subtle surface `#E3ECF8`, Primary Ink `#0A1931` (17.55:1), Secondary Ink `#3B4E6B` (8.44:1), Court Blue `#0046AD` (8.47:1 w/ white, header + active controls), Match Gold `#FACC15` (header court stripe + SFX badge tint `#FEF3C7` / `#784700`, 6.99:1), Live Crimson `#C81E2B` (5.71:1 w/ white, active playing state + Auto-Duck `DUCK` + Stop All).
-- **Booth Dark (toggle)**: Canvas `#08101D`, Surface `#101C2F`, Subtle `#182842`, Primary Ink `#F2F6FC` (15.75:1), Secondary Ink `#9DB3D1` (7.97:1), Match Gold `#FACC15` primary controls with dark ink `#08101D` (12.44:1), Court Blue tint `#132B4F` / `#93C5FD` for BGM tags, Live Crimson `#C81E2B` (5.71:1 w/ white).
+## Palette (R-25, R-29)
+- **Arena Light (default)**:
+  - Canvas `#EFEFED`, Surface `#FFFFFF`, Subtle `#E5E5E2`, Primary Ink `#111111` (18.88:1 on white, 16.40:1 on stone), Secondary Ink `#555552` (6.50:1 on stone) / `#595956` (7.03:1 on white)
+  - Matte Obsidian Hero/Dock `#111111` with White `#FFFFFF` (18.88:1) and Stone Muted `#A3A39E` (7.45:1)
+  - Vermilion Signal `#EE4D22` (icons, switch track, active dot, dot-matrix lit bars; `#111111` on `#EE4D22` = 5.14:1), Button Vermilion `#D63E16` (4.61:1 w/ white), Text Vermilion `#C43611` (5.41:1 on white), Vermilion Tint `#FDEEE9` / `#A82D0D` (6.10:1)
+- **Booth Dark (toggle)**:
+  - Canvas `#0B0B0B`, Surface `#161616`, Subtle `#222220`, Primary Ink `#F5F5F3` (16.58:1 on surface), Secondary Ink `#A1A19C` (6.97:1 on surface)
+  - Active Pill `#F5F5F3` with `#111111` text (17.30:1), Button Vermilion `#D63E16` (4.61:1 w/ white), Text Vermilion `#FF7A52` (7.03:1), Vermilion Tint `#2E1711` / `#FF8C69` (7.38:1)
 
 ## Typography (R-06)
-- **Primary UI**: `Plus Jakarta Sans` — selected for crisp Indonesian and Latin legibility in bright gymnasium lighting across narrow phone screens and desktop consoles.
-- **Technical readouts**: `JetBrains Mono` with `font-variant-numeric: tabular-nums` — strictly for timecodes (`00:18 / 01:42`), shortcut keycaps (`Shift+A`), and byte/track counts.
+- **Primary UI**: `Geist` — clean geometric neo-grotesque with two-tone heading hierarchy (`#111111` + `#555552` muted weight) and crisp tabular alignment.
+- **Technical readouts**: `Geist Mono` with `font-variant-numeric: tabular-nums` — strictly for timecodes, pad counts, shortcut keycaps, and byte sizes.
 
 ## Design Decisions (R-31)
-- **Dual-channel sticky transport deck**: Separates BGM playlist playback from instant SFX cues so operators can fire Ace/Spike/Block hits over background music with optional auto-ducking and one-tap Fade Out / Stop All.
-- **Mobile-first bottom navigation + dedicated Quick Pad**: On phones, primary destinations (Quick Pad, Library, Favorit, Script MC) sit in a thumb-reachable bottom bar while the sticky mini-deck reserves bottom scroll padding so no track row is obscured.
-- **Three responsive layout states**: Single-column mobile (< 640px), two-column tablet (640px-1023px), and desktop console with persistent category rail + right-hand Quick Pad / MC Script panel (>= 1024px).
-- **Consistent 1.75px authored SVG icons**: Zero emojis or mixed libraries; custom geometric audio/volleyball glyphs for instant recognition at 44px+ touch targets.
+- **Mobile Hero Live Deck + Floating Pill Dock**: On mobile Quick Pad, the matte-black hero card owns live BGM/SFX readout, 24-dot matrix scrubber, Play/Pause, Fade Out, Mixer, and STOP, eliminating duplicate bottom bars while keeping the 5-slot floating obsidian pill dock (with center vermilion Play/Stop action) anchored above safe areas.
+- **2-Card Bento Status Row**: Pairs the Auto-Duck BGM switch card (flips obsidian when active with vermilion pill toggle) alongside the Quick Pad count/dot-matrix/Atur Pad card.
+- **Tactile Rounded Geometry**: `24px` hero card, `20px` bento/pad cards, `18px` track rows, and `999px` pill segmented filters and floating dock, maintaining `44x44px` minimum touch targets.

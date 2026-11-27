@@ -16,18 +16,20 @@ import {
 } from './data/catalog';
 import { DeckBar } from './components/DeckBar';
 import {
-  BrandMark,
   CloseIcon,
   DownloadIcon,
   LibraryIcon,
   MicScriptIcon,
   MoonIcon,
   PadGridIcon,
+  PlayIcon,
   SearchIcon,
   StarIcon,
+  StopIcon,
   SunIcon,
 } from './components/Icons';
 import { McScriptPanel, type McScriptData } from './components/McScriptPanel';
+import { MobileHeroDeck } from './components/MobileHeroDeck';
 import { QuickPad } from './components/QuickPad';
 import { TrackRow } from './components/TrackRow';
 
@@ -125,7 +127,7 @@ export function App() {
     document.documentElement.setAttribute('data-theme', theme);
     const metaTheme = document.querySelector('meta[name="theme-color"]');
     if (metaTheme) {
-      metaTheme.setAttribute('content', theme === 'dark' ? '#08101D' : '#0046AD');
+      metaTheme.setAttribute('content', theme === 'dark' ? '#0B0B0B' : '#EFEFED');
     }
     try {
       localStorage.setItem(THEME_STORAGE_KEY, theme);
@@ -376,19 +378,23 @@ export function App() {
   const activeCategoryMeta = useMemo(() => {
     if (effectiveFilter === 'all') {
       return {
-        title: 'Semua Track Pertandingan',
+        titleLead: 'Semua Track',
+        titleAccent: 'Pertandingan',
         description: `${TRACKS.length} audio lokal PBVSI siap putar langsung dari perangkat Anda.`,
       };
     }
     if (effectiveFilter === 'favorites') {
       return {
-        title: 'Track Favorit',
+        titleLead: 'Track',
+        titleAccent: 'Favorit',
         description: 'Daftar pintas audio pilihan Anda selama bertugas di lapangan.',
       };
     }
     const found = CATEGORIES.find((c) => c.id === effectiveFilter);
+    const words = (found?.name ?? 'Library Audio').split(' ');
     return {
-      title: found?.name ?? 'Library Audio',
+      titleLead: words[0],
+      titleAccent: words.slice(1).join(' '),
       description: found?.description ?? '',
     };
   }, [effectiveFilter]);
@@ -410,11 +416,16 @@ export function App() {
 
       <header className="top-bar">
         <div className="top-bar__brand">
-          <BrandMark size={30} />
-          <div className="brand-text">
-            <h1 className="brand-name">VolleyBeats</h1>
-            <span className="brand-sub">Volleyball Match Audio</span>
-          </div>
+          <h1 className="brand-heading">
+            <img
+              src={theme === 'dark' ? '/icons/logo-dark.png' : '/icons/logo-light.png'}
+              alt="VolleyBeats Match Audio Console"
+              width={586}
+              height={316}
+              fetchPriority="high"
+              className="brand-logo-img"
+            />
+          </h1>
         </div>
 
         <div className="top-bar__actions">
@@ -433,7 +444,17 @@ export function App() {
 
           <button
             type="button"
-            className="icon-btn theme-btn"
+            className="circle-action-btn only-mobile"
+            onClick={goToLibraryToAddPad}
+            aria-label="Cari audio di Library"
+            title="Cari audio"
+          >
+            <SearchIcon size={18} />
+          </button>
+
+          <button
+            type="button"
+            className="circle-action-btn theme-btn"
             onClick={() => setTheme((t) => (t === 'light' ? 'dark' : 'light'))}
             aria-label={theme === 'light' ? 'Aktifkan tema gelap Booth Console' : 'Aktifkan tema terang Arena Light'}
             title={theme === 'light' ? 'Tema Gelap' : 'Tema Terang'}
@@ -513,6 +534,16 @@ export function App() {
 
         <main id="main-content" className="main-stage">
           <div className={`mobile-view ${mobileTab === 'pad' ? 'is-visible' : 'is-hidden-mobile'} only-mobile`}>
+            <MobileHeroDeck
+              audio={audio}
+              mixerOpen={mixerOpen}
+              onToggleMixer={() => setMixerOpen((v) => !v)}
+              onTogglePlayPause={() => audioEngine.toggleBgmPlayPause()}
+              onSeek={(sec) => audioEngine.seekBgm(sec)}
+              onFadeOut={() => audioEngine.fadeOutAll()}
+              onStopAll={() => audioEngine.stopAll()}
+              onStopSfx={() => audioEngine.stopSfx()}
+            />
             <QuickPad
               tracks={quickPadTracks}
               audio={audio}
@@ -547,7 +578,10 @@ export function App() {
             <div className="library-header">
               <div>
                 <h2 id="library-heading" className="section-title">
-                  {activeCategoryMeta.title}
+                  {activeCategoryMeta.titleLead}{' '}
+                  {activeCategoryMeta.titleAccent && (
+                    <span className="section-title-muted">{activeCategoryMeta.titleAccent}</span>
+                  )}
                 </h2>
                 <p className="section-sub">{activeCategoryMeta.description}</p>
               </div>
@@ -750,6 +784,7 @@ export function App() {
       <DeckBar
         audio={audio}
         mixerOpen={mixerOpen}
+        hideMobileBar={mobileTab === 'pad'}
         onToggleMixer={() => setMixerOpen((v) => !v)}
         onTogglePlayPause={() => audioEngine.toggleBgmPlayPause()}
         onSeek={(sec) => audioEngine.seekBgm(sec)}
@@ -767,51 +802,103 @@ export function App() {
         onCacheAllOffline={handleCacheAllOffline}
       />
 
-      <nav className="mobile-bottom-nav only-mobile" aria-label="Menu utama perangkat mobile">
-        <button
-          type="button"
-          className={`bnav-item ${mobileTab === 'pad' ? 'is-active' : ''}`}
-          onClick={() => setMobileTab('pad')}
-          aria-current={mobileTab === 'pad' ? 'page' : undefined}
-        >
-          <PadGridIcon size={20} />
-          <span>Quick Pad</span>
-        </button>
+      {(() => {
+        const hasAnyActive =
+          audio.bgm.status === 'playing' ||
+          audio.bgm.status === 'loading' ||
+          audio.sfx.status === 'playing' ||
+          audio.sfx.status === 'loading';
+        const canResumeBgm = !hasAnyActive && Boolean(audio.bgm.track);
 
-        <button
-          type="button"
-          className={`bnav-item ${mobileTab === 'library' ? 'is-active' : ''}`}
-          onClick={() => {
-            if (selectedFilter === 'favorites') setSelectedFilter('all');
-            setMobileTab('library');
-          }}
-          aria-current={mobileTab === 'library' ? 'page' : undefined}
-        >
-          <LibraryIcon size={20} />
-          <span>Library</span>
-        </button>
+        function handleDockCenterAction() {
+          if (hasAnyActive) {
+            audioEngine.stopAll();
+            showBriefFeedback('Semua audio dihentikan');
+          } else if (canResumeBgm) {
+            audioEngine.toggleBgmPlayPause();
+          } else {
+            setMobileTab('pad');
+          }
+        }
 
-        <button
-          type="button"
-          className={`bnav-item ${mobileTab === 'favorites' ? 'is-active' : ''}`}
-          onClick={() => setMobileTab('favorites')}
-          aria-current={mobileTab === 'favorites' ? 'page' : undefined}
-        >
-          <StarIcon size={20} filled={mobileTab === 'favorites'} />
-          <span>Favorit</span>
-          {favorites.length > 0 && <span className="bnav-badge mono-num">{favorites.length}</span>}
-        </button>
+        return (
+          <nav className="mobile-bottom-nav only-mobile" aria-label="Menu utama perangkat mobile">
+            <button
+              type="button"
+              className={`bnav-item ${mobileTab === 'pad' ? 'is-active' : ''}`}
+              onClick={() => setMobileTab('pad')}
+              aria-current={mobileTab === 'pad' ? 'page' : undefined}
+              aria-label="Quick Pad"
+            >
+              <PadGridIcon size={20} />
+              <span className="bnav-label">Pad</span>
+              {mobileTab === 'pad' && <span className="bnav-dot" aria-hidden="true" />}
+            </button>
 
-        <button
-          type="button"
-          className={`bnav-item ${mobileTab === 'mc' ? 'is-active' : ''}`}
-          onClick={() => setMobileTab('mc')}
-          aria-current={mobileTab === 'mc' ? 'page' : undefined}
-        >
-          <MicScriptIcon size={20} />
-          <span>Script MC</span>
-        </button>
-      </nav>
+            <button
+              type="button"
+              className={`bnav-item ${mobileTab === 'library' ? 'is-active' : ''}`}
+              onClick={() => {
+                if (selectedFilter === 'favorites') setSelectedFilter('all');
+                setMobileTab('library');
+              }}
+              aria-current={mobileTab === 'library' ? 'page' : undefined}
+              aria-label="Library"
+            >
+              <LibraryIcon size={20} />
+              <span className="bnav-label">Library</span>
+              {mobileTab === 'library' && <span className="bnav-dot" aria-hidden="true" />}
+            </button>
+
+            <button
+              type="button"
+              className={`bnav-center-btn ${hasAnyActive ? 'is-live' : ''}`}
+              onClick={handleDockCenterAction}
+              aria-label={
+                hasAnyActive
+                  ? 'Hentikan semua audio'
+                  : canResumeBgm
+                    ? 'Lanjutkan pemutaran BGM'
+                    : 'Buka Quick Pad'
+              }
+              title={
+                hasAnyActive
+                  ? 'Stop semua audio'
+                  : canResumeBgm
+                    ? 'Lanjutkan BGM'
+                    : 'Quick Pad'
+              }
+            >
+              {hasAnyActive ? <StopIcon size={18} /> : <PlayIcon size={19} />}
+            </button>
+
+            <button
+              type="button"
+              className={`bnav-item ${mobileTab === 'favorites' ? 'is-active' : ''}`}
+              onClick={() => setMobileTab('favorites')}
+              aria-current={mobileTab === 'favorites' ? 'page' : undefined}
+              aria-label="Favorit"
+            >
+              <StarIcon size={20} filled={mobileTab === 'favorites'} />
+              <span className="bnav-label">Favorit</span>
+              {favorites.length > 0 && <span className="bnav-badge mono-num">{favorites.length}</span>}
+              {mobileTab === 'favorites' && <span className="bnav-dot" aria-hidden="true" />}
+            </button>
+
+            <button
+              type="button"
+              className={`bnav-item ${mobileTab === 'mc' ? 'is-active' : ''}`}
+              onClick={() => setMobileTab('mc')}
+              aria-current={mobileTab === 'mc' ? 'page' : undefined}
+              aria-label="Script MC"
+            >
+              <MicScriptIcon size={20} />
+              <span className="bnav-label">MC</span>
+              {mobileTab === 'mc' && <span className="bnav-dot" aria-hidden="true" />}
+            </button>
+          </nav>
+        );
+      })()}
     </div>
   );
 }

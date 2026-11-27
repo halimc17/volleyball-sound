@@ -1,4 +1,4 @@
-const SHELL_CACHE = 'volleybeats-shell-v1';
+const SHELL_CACHE = 'volleybeats-shell-v2';
 const AUDIO_CACHE = 'volleybeats-audio-v1';
 
 const SHELL_ASSETS = [
@@ -6,6 +6,10 @@ const SHELL_ASSETS = [
   '/index.html',
   '/manifest.webmanifest',
   '/icons/icon.svg',
+  '/icons/logo-light.png',
+  '/icons/logo-dark.png',
+  '/icons/icon-192.png',
+  '/icons/icon-512.png',
 ];
 
 self.addEventListener('install', (event) => {

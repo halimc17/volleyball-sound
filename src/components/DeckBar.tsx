@@ -15,6 +15,7 @@ import {
 interface DeckBarProps {
   audio: AudioEngineSnapshot;
   mixerOpen: boolean;
+  hideMobileBar?: boolean;
   onToggleMixer: () => void;
   onTogglePlayPause: () => void;
   onSeek: (time: number) => void;
@@ -43,6 +44,7 @@ function formatTime(sec: number): string {
 export function DeckBar({
   audio,
   mixerOpen,
+  hideMobileBar = false,
   onToggleMixer,
   onTogglePlayPause,
   onSeek,
@@ -76,10 +78,15 @@ export function DeckBar({
     sfx.status === 'playing' ||
     sfx.status === 'loading';
 
+  const hasTrackOrActive = Boolean(bgm.track) || hasActiveAudio;
   const duration = bgm.duration > 0 ? bgm.duration : 0;
 
   return (
-    <div className="deck-shell" role="region" aria-label="Kontrol pemutar audio pertandingan">
+    <div
+      className={`deck-shell ${hideMobileBar ? 'is-mobile-hidden' : ''} ${!hasTrackOrActive ? 'is-mobile-idle' : ''} ${mixerOpen ? 'has-mixer' : ''}`}
+      role="region"
+      aria-label="Kontrol pemutar audio pertandingan"
+    >
       {mixerOpen && (
         <div className="mixer-drawer" role="dialog" aria-label="Pengaturan mixer dan offline cache">
           <div className="mixer-drawer__head">
@@ -231,6 +238,7 @@ export function DeckBar({
 
             <div className="deck-scrub-row">
               <span className="mono-num deck-time">{formatTime(bgm.currentTime)}</span>
+              <span className="mono-num deck-time-sep" aria-hidden="true">/</span>
               <input
                 type="range"
                 className="deck-scrubber"

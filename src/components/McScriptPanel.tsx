@@ -56,7 +56,9 @@ export function McScriptPanel({
     <section className="mc-panel" aria-labelledby={`${uid}-heading`}>
       <div className="section-head">
         <div>
-          <h2 id={`${uid}-heading`} className="section-title">Teks Opening MC</h2>
+          <h2 id={`${uid}-heading`} className="section-title">
+            Teks <span className="section-title-muted">Opening MC</span>
+          </h2>
           <p className="section-sub">Panduan pengumuman pembukaan pertandingan sesuai format PBVSI.</p>
         </div>
         <button
