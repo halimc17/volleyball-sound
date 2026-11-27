@@ -1,15 +1,19 @@
-const SHELL_CACHE = 'volleybeats-shell-v2';
+const SHELL_CACHE = 'volleybeats-shell-v3';
 const AUDIO_CACHE = 'volleybeats-audio-v1';
 
 const SHELL_ASSETS = [
   '/',
   '/index.html',
   '/manifest.webmanifest',
-  '/icons/icon.svg',
+  '/favicon.png',
   '/icons/logo-light.png',
   '/icons/logo-dark.png',
+  '/icons/favicon-light-64.png',
+  '/icons/favicon-dark-64.png',
+  '/icons/apple-touch-icon.png',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
+  '/icons/icon-maskable-512.png',
 ];
 
 self.addEventListener('install', (event) => {
@@ -78,7 +82,8 @@ self.addEventListener('fetch', (event) => {
   // Hashed static assets & icons: cache-first with network fallback.
   event.respondWith(
     caches.open(SHELL_CACHE).then(async (cache) => {
-      const cached = await cache.match(request);
+      const matchOpts = url.pathname.startsWith('/icons/') ? { ignoreSearch: true } : undefined;
+      const cached = await cache.match(request, matchOpts);
       if (cached) return cached;
       const network = await fetch(request);
       if (network.status === 200) {
